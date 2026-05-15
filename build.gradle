@@ -1,120 +1,26 @@
-package ru.victorcarr.reports;
+plugins {
+    id 'java'
+}
 
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
+group 'ru.victorcarr'
+version '1.0.0'
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-public final class ReportManager {
-
-    private final ReportPlugin plugin;
-    private final File reportsFile;
-    private final List<Report> reports = new ArrayList<>();
-
-    public ReportManager(ReportPlugin plugin) {
-        this.plugin = plugin;
-        this.reportsFile = new File(plugin.getDataFolder(), "reports.yml");
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
     }
+}
 
-    public void loadReports() {
-        reports.clear();
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+}
 
-        if (!reportsFile.exists()) {
-            try {
-                File parent = reportsFile.getParentFile();
-                if (parent != null && !parent.exists()) {
-                    parent.mkdirs();
-                }
-                reportsFile.createNewFile();
-            } catch (IOException e) {
-                plugin.getLogger().severe("Could not create reports.yml: " + e.getMessage());
-                return;
-            }
-        }
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT'
+}
 
-        FileConfiguration config = YamlConfiguration.loadConfiguration(reportsFile);
-        ConfigurationSection section = config.getConfigurationSection("reports");
-        if (section == null) {
-            return;
-        }
-
-        for (String id : section.getKeys(false)) {
-            String path = "reports." + id + ".";
-            Report report = new Report(
-                    id,
-                    config.getString(path + "reporterName", "Unknown"),
-                    config.getString(path + "reporterUuid", "CONSOLE"),
-                    config.getString(path + "targetName", "Unknown"),
-                    config.getString(path + "reason", "Без причины"),
-                    config.getLong(path + "createdAt", System.currentTimeMillis()),
-                    config.getString(path + "status", "OPEN")
-            );
-            reports.add(report);
-        }
-
-        reports.sort(Comparator.comparingLong(Report::getCreatedAt).reversed());
-    }
-
-    public void saveReports() {
-        FileConfiguration config = new YamlConfiguration();
-
-        for (Report report : reports) {
-            String path = "reports." + report.getId() + ".";
-            config.set(path + "reporterName", report.getReporterName());
-            config.set(path + "reporterUuid", report.getReporterUuid());
-            config.set(path + "targetName", report.getTargetName());
-            config.set(path + "reason", report.getReason());
-            config.set(path + "createdAt", report.getCreatedAt());
-            config.set(path + "status", report.getStatus());
-        }
-
-        try {
-            config.save(reportsFile);
-        } catch (IOException e) {
-            plugin.getLogger().severe("Could not save reports.yml: " + e.getMessage());
-        }
-    }
-
-    public Report createReport(String reporterName, String reporterUuid, String targetName, String reason) {
-        Report report = new Report(
-                UUID.randomUUID().toString(),
-                reporterName,
-                reporterUuid,
-                targetName,
-                reason,
-                System.currentTimeMillis(),
-                "OPEN"
-        );
-
-        reports.add(0, report);
-        saveReports();
-        return report;
-    }
-
-    public List<Report> getOpenReports() {
-        return reports.stream()
-                .filter(Report::isOpen)
-                .sorted(Comparator.comparingLong(Report::getCreatedAt).reversed())
-                .toList();
-    }
-
-    public Optional<Report> getReport(String id) {
-        return reports.stream()
-                .filter(report -> report.getId().equals(id))
-                .findFirst();
-    }
-
-    public void closeReport(String id) {
-        getReport(id).ifPresent(report -> {
-            report.close();
-            saveReports();
-        });
-    }
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.release.set(21)
 }
