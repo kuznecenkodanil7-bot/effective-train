@@ -1,0 +1,49 @@
+package ru.victorcarr.reports;
+
+import org.bukkit.command.PluginCommand;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public final class ReportPlugin extends JavaPlugin {
+
+    private ReportManager reportManager;
+    private ReportsMenu reportsMenu;
+
+    @Override
+    public void onEnable() {
+        saveDefaultConfig();
+
+        this.reportManager = new ReportManager(this);
+        this.reportManager.loadReports();
+
+        this.reportsMenu = new ReportsMenu(this, reportManager);
+        getServer().getPluginManager().registerEvents(reportsMenu, this);
+
+        ReportCommand reportCommand = new ReportCommand(this, reportManager);
+        PluginCommand report = getCommand("report");
+        if (report != null) {
+            report.setExecutor(reportCommand);
+            report.setTabCompleter(reportCommand);
+        }
+
+        OtCommand otCommand = new OtCommand(this, reportManager, reportsMenu);
+        PluginCommand ot = getCommand("ot");
+        if (ot != null) {
+            ot.setExecutor(otCommand);
+        }
+
+        getLogger().info("ReportSystem enabled. Loaded reports: " + reportManager.getOpenReports().size());
+    }
+
+    @Override
+    public void onDisable() {
+        if (reportManager != null) {
+            reportManager.saveReports();
+        }
+    }
+
+    public String msg(String path) {
+        String prefix = getConfig().getString("messages.prefix", "§8[§cReports§8] §f");
+        String message = getConfig().getString("messages." + path, path);
+        return prefix + message;
+    }
+}

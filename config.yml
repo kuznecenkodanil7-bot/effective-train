@@ -1,0 +1,62 @@
+package ru.victorcarr.reports;
+
+public final class Report {
+
+    private final String id;
+    private final String reporterName;
+    private final String reporterUuid;
+    private final String targetName;
+    private final String reason;
+    private final long createdAt;
+    private String status;
+
+    public Report(String id, String reporterName, String reporterUuid, String targetName, String reason, long createdAt, String status) {
+        this.id = id;
+        this.reporterName = reporterName;
+        this.reporterUuid = reporterUuid;
+        this.targetName = targetName;
+        this.reason = reason;
+        this.createdAt = createdAt;
+        this.status = status;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getShortId() {
+        return id.length() <= 8 ? id : id.substring(0, 8);
+    }
+
+    public String getReporterName() {
+        return reporterName;
+    }
+
+    public String getReporterUuid() {
+        return reporterUuid;
+    }
+
+    public String getTargetName() {
+        return targetName;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public long getCreatedAt() {
+        return createdAt;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public boolean isOpen() {
+        return "OPEN".equalsIgnoreCase(status);
+    }
+
+    public void close() {
+        this.status = "CLOSED";
+    }
+}
